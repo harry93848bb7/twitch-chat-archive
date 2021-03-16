@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+
+	"github.com/harry93848bb7/chat-archiver/sterilise"
 )
 
 // Emote ...
@@ -82,11 +85,18 @@ func BTTVGlobal() ([]Emote, error) {
 		if err != nil {
 			return nil, err
 		}
+		s, format, err := sterilise.SteriliseImage(b)
+		if err == sterilise.UnknownFormat {
+			log.Println("Unknown emote image file format:", emote.Code)
+			continue
+		} else if err != nil {
+			return nil, err
+		}
 		emotes = append(emotes, Emote{
 			Code:          emote.Code,
 			Source:        "BetterTTV Global Emotes",
-			ImageType:     emote.ImageType,
-			Base64Encoded: base64.RawStdEncoding.EncodeToString(b),
+			ImageType:     format,
+			Base64Encoded: base64.RawStdEncoding.EncodeToString(s),
 		})
 	}
 	return emotes, nil
@@ -136,11 +146,18 @@ func BTTVUser(userID string) ([]Emote, error) {
 		if err != nil {
 			return nil, err
 		}
+		s, format, err := sterilise.SteriliseImage(b)
+		if err == sterilise.UnknownFormat {
+			log.Println("Unknown emote image file format:", emote.Code)
+			continue
+		} else if err != nil {
+			return nil, err
+		}
 		emotes = append(emotes, Emote{
 			Code:          emote.Code,
 			Source:        "BetterTTV Channel Emotes",
-			ImageType:     emote.ImageType,
-			Base64Encoded: base64.RawStdEncoding.EncodeToString(b),
+			ImageType:     format,
+			Base64Encoded: base64.RawStdEncoding.EncodeToString(s),
 		})
 	}
 	for _, emote := range data.SharedEmotes {
@@ -152,11 +169,18 @@ func BTTVUser(userID string) ([]Emote, error) {
 		if err != nil {
 			return nil, err
 		}
+		s, format, err := sterilise.SteriliseImage(b)
+		if err == sterilise.UnknownFormat {
+			log.Println("Unknown emote image file format:", emote.Code)
+			continue
+		} else if err != nil {
+			return nil, err
+		}
 		emotes = append(emotes, Emote{
 			Code:          emote.Code,
 			Source:        "BetterTTV Channel Emotes",
-			ImageType:     emote.ImageType,
-			Base64Encoded: base64.RawStdEncoding.EncodeToString(b),
+			ImageType:     format,
+			Base64Encoded: base64.RawStdEncoding.EncodeToString(s),
 		})
 	}
 	return emotes, nil
@@ -196,11 +220,18 @@ func FFZGlobal() ([]Emote, error) {
 				if err != nil {
 					return nil, err
 				}
+				s, format, err := sterilise.SteriliseImage(b)
+				if err == sterilise.UnknownFormat {
+					log.Println("Unknown emote image file format:", emote.Name)
+					continue
+				} else if err != nil {
+					return nil, err
+				}
 				emotes = append(emotes, Emote{
 					Code:          emote.Name,
 					Source:        "FrankerFaceZ Global Emotes",
-					ImageType:     "png",
-					Base64Encoded: base64.RawStdEncoding.EncodeToString(b),
+					ImageType:     format,
+					Base64Encoded: base64.RawStdEncoding.EncodeToString(s),
 				})
 			}
 		}
@@ -241,11 +272,18 @@ func FFZUser(userID string) ([]Emote, error) {
 			if err != nil {
 				return nil, err
 			}
+			s, format, err := sterilise.SteriliseImage(b)
+			if err == sterilise.UnknownFormat {
+				log.Println("Unknown emote image file format:", emote.Name)
+				continue
+			} else if err != nil {
+				return nil, err
+			}
 			emotes = append(emotes, Emote{
 				Code:          emote.Name,
 				Source:        "FrankerFaceZ " + channel.Title,
-				ImageType:     "png",
-				Base64Encoded: base64.RawStdEncoding.EncodeToString(b),
+				ImageType:     format,
+				Base64Encoded: base64.RawStdEncoding.EncodeToString(s),
 			})
 		}
 	}
@@ -255,29 +293,31 @@ func FFZUser(userID string) ([]Emote, error) {
 // TwitchGlobal ...
 func TwitchGlobal() ([]Emote, error) {
 	var emotes = []Emote{}
-
 	directory, err := twitchGlobal.ReadDir("twitchglobal")
 	if err != nil {
 		return nil, err
 	}
 	for _, entry := range directory {
-
 		code := emoteMapping[entry.Name()]
 		if code == "" {
-			fmt.Println(entry.Name())
 			return nil, fmt.Errorf("emote mapping not found")
 		}
-
 		b, err := twitchGlobal.ReadFile("twitchglobal/" + entry.Name())
 		if err != nil {
 			return nil, err
 		}
-
+		s, format, err := sterilise.SteriliseImage(b)
+		if err == sterilise.UnknownFormat {
+			log.Println("Unknown emote image file format:", code)
+			continue
+		} else if err != nil {
+			return nil, err
+		}
 		emotes = append(emotes, Emote{
 			Code:          code,
 			Source:        "Twitch Global",
-			ImageType:     "png",
-			Base64Encoded: base64.RawStdEncoding.EncodeToString(b),
+			ImageType:     format,
+			Base64Encoded: base64.RawStdEncoding.EncodeToString(s),
 		})
 	}
 	return emotes, nil

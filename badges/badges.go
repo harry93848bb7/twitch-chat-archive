@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+
+	"github.com/harry93848bb7/chat-archiver/sterilise"
 )
 
 // Badge ...
@@ -64,12 +67,19 @@ func TwitchGlobalBadges() ([]Badge, error) {
 			if err != nil {
 				return nil, err
 			}
+			s, format, err := sterilise.SteriliseImage(b)
+			if err == sterilise.UnknownFormat {
+				log.Println("Unknown badge image file format:", version.Title)
+				continue
+			} else if err != nil {
+				return nil, err
+			}
 			badges = append(badges, Badge{
 				Code:          code,
 				Version:       number,
 				Title:         version.Title,
-				ImageType:     "png",
-				Base64Encoded: base64.RawStdEncoding.EncodeToString(b),
+				ImageType:     format,
+				Base64Encoded: base64.RawStdEncoding.EncodeToString(s),
 			})
 		}
 	}
@@ -101,12 +111,19 @@ func UserBadges(userID string) ([]Badge, error) {
 			if err != nil {
 				return nil, err
 			}
+			s, format, err := sterilise.SteriliseImage(b)
+			if err == sterilise.UnknownFormat {
+				log.Println("Unknown badge image file format:", version.Title)
+				continue
+			} else if err != nil {
+				return nil, err
+			}
 			badges = append(badges, Badge{
 				Code:          code,
 				Version:       number,
 				Title:         version.Title,
-				ImageType:     "png",
-				Base64Encoded: base64.RawStdEncoding.EncodeToString(b),
+				ImageType:     format,
+				Base64Encoded: base64.RawStdEncoding.EncodeToString(s),
 			})
 		}
 	}
