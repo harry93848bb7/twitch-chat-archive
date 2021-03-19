@@ -1,6 +1,6 @@
 # Twitch Chat Archiver
 
-A tool to archive an entire VOD chat. The goal of this tool is provide all relavent data for a complete offline replay of a VOD chat.
+A tool to archive an entire VOD chat. The goal of this tool is to save all relavent data for a complete offline replay of a VOD chat.
 
 ### Features
 - Archives include embedded badges and emote images / gifs
