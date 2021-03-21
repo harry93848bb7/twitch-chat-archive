@@ -1,4 +1,4 @@
-module github.com/harry93848bb7/chat-archiver
+module github.com/harry93848bb7/twitch-chat-archiver
 
 go 1.16
 

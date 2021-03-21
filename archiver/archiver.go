@@ -4,10 +4,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/harry93848bb7/chat-archiver/badges"
-	"github.com/harry93848bb7/chat-archiver/emotes"
-	"github.com/harry93848bb7/chat-archiver/messages"
-	"github.com/harry93848bb7/chat-archiver/protobuf"
+	"github.com/harry93848bb7/twitch-chat-archiver/badges"
+	"github.com/harry93848bb7/twitch-chat-archiver/emotes"
+	"github.com/harry93848bb7/twitch-chat-archiver/messages"
+	"github.com/harry93848bb7/twitch-chat-archiver/protobuf"
 )
 
 // Emotes ...

@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/harry93848bb7/chat-archiver/protobuf"
-	"github.com/harry93848bb7/chat-archiver/sterilise"
+	"github.com/harry93848bb7/twitch-chat-archiver/protobuf"
+	"github.com/harry93848bb7/twitch-chat-archiver/sterilise"
 )
 
 // Client ...

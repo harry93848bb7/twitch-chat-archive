@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/harry93848bb7/chat-archiver/archiver"
-	"github.com/harry93848bb7/chat-archiver/messages"
-	"github.com/harry93848bb7/chat-archiver/protobuf"
+	"github.com/harry93848bb7/twitch-chat-archiver/archiver"
+	"github.com/harry93848bb7/twitch-chat-archiver/messages"
+	"github.com/harry93848bb7/twitch-chat-archiver/protobuf"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
