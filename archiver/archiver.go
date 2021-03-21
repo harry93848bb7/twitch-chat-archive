@@ -1,20 +1,13 @@
 package archiver
 
 import (
-	"fmt"
 	"log"
-	"net"
 	"net/http"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/harry93848bb7/chat-archiver/badges"
 	"github.com/harry93848bb7/chat-archiver/emotes"
 	"github.com/harry93848bb7/chat-archiver/messages"
 	"github.com/harry93848bb7/chat-archiver/protobuf"
-
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Emotes ...
@@ -162,99 +155,4 @@ func Messages(client *http.Client, vodID, clientID string) ([]*protobuf.Message,
 		next = chunk.Next
 	}
 	return message, nil
-}
-
-// Archive ...
-func Archive(vodID, clientID string) (*protobuf.Archive, error) {
-	// Custom httpClient with timeouts because we are preforming many requests
-	// to different API's which we can't guarantee will be supported in the future.
-	var httpClient = &http.Client{
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout: 5 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 5 * time.Second,
-		},
-		Timeout: time.Second * 10,
-	}
-	client := messages.NewClient(httpClient, clientID)
-
-	log.Println("Getting basic VOD information")
-	vod, err := client.GetVODInfo(vodID)
-	if err != nil {
-		log.Println("Failed to get VOD information", err)
-		return &protobuf.Archive{}, err
-	}
-	vID, err := strconv.ParseInt(vodID, 10, 64)
-	if err != nil {
-		return &protobuf.Archive{}, err
-	}
-	log.Println("Getting all global and channel specific badges")
-	badge, err := Badges(httpClient, fmt.Sprintf("%d", vod.Channel.ID))
-	if err != nil {
-		return &protobuf.Archive{}, err
-	}
-	log.Println("Getting all global, thirdparty and channel subscription emotes")
-	emote, err := Emotes(httpClient, fmt.Sprintf("%d", vod.Channel.ID))
-	if err != nil {
-		return &protobuf.Archive{}, err
-	}
-	log.Println("Getting all messages sent during the VOD. This may take a while...")
-	message, err := Messages(httpClient, vodID, clientID)
-	if err != nil {
-		return &protobuf.Archive{}, err
-	}
-
-	// Remove badges which are not being used in any of the chat messages to reduce file size as they are redundant
-	deleted := 0
-	for g := range badge {
-		i := g - deleted
-		badgeOccurance := 0
-
-		for _, m := range message {
-			for _, messageBadge := range m.Badges {
-				if (messageBadge.Code == badge[i].Code) && (messageBadge.Version == badge[i].Version) {
-					badgeOccurance++
-				}
-			}
-		}
-		if badgeOccurance == 0 {
-			badge = append(badge[:i], badge[i+1:]...)
-			deleted++
-		}
-	}
-	log.Printf("Successfully remove %d badges not being used in the archive messages", deleted)
-
-	// Remove emotes which are not being used in any of the chat messages to reduce file size as they are redundant
-	deleted = 0
-	for g := range emote {
-		i := g - deleted
-		emoteOccurance := 0
-
-		for _, m := range message {
-			if strings.Index(m.Content, emote[i].Code) != -1 {
-				emoteOccurance++
-			}
-		}
-		if emoteOccurance == 0 {
-			emote = append(emote[:i], emote[i+1:]...)
-			deleted++
-		}
-	}
-	log.Printf("Successfully remove %d emotes not being used in the archive messages", deleted)
-
-	return &protobuf.Archive{
-		VodId:      vID,
-		Title:      vod.Title,
-		Category:   vod.Game,
-		Length:     timestamppb.New(time.Unix(int64(vod.Length), 0)),
-		RecordedAt: timestamppb.New(vod.RecordedAt),
-		Channel: &protobuf.Channel{
-			Name: vod.Channel.DisplayName,
-			Id:   int64(vod.Channel.ID),
-		},
-		Badges:   badge,
-		Emotes:   emote,
-		Messages: message,
-	}, nil
 }
