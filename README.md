@@ -19,7 +19,7 @@ A tool to archive an entire VOD chat. The goal of this tool is to save all relav
 - Channel Bit Badges
 - Channel Cheer Badges
 
-### Installation / Usage
+## Installation / Usage
 You will need a Twitch Client ID. Register an application [here](https://dev.twitch.tv/console/apps/create) and copy the Client ID. The OAuth Redirect URL can be any value.
 
 
