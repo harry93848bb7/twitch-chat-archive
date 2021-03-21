@@ -3,6 +3,8 @@ package archiver
 import (
 	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -16,40 +18,42 @@ import (
 )
 
 // Emotes ...
-func Emotes(channelID string) ([]*protobuf.Emote, error) {
+func Emotes(client *http.Client, channelID string) ([]*protobuf.Emote, error) {
 	var emote = []*protobuf.Emote{}
 
-	bttvglobal, err := emotes.BTTVGlobal()
+	emotesClient := emotes.NewClient(client)
+
+	bttvglobal, err := emotesClient.BTTVGlobal()
 	if err != nil {
 		return nil, err
 	}
 	emote = append(emote, bttvglobal...)
-	bttvuser, err := emotes.BTTVChannel(channelID)
+	bttvuser, err := emotesClient.BTTVChannel(channelID)
 	if err != nil {
 		return nil, err
 	}
 	emote = append(emote, bttvuser...)
-	ffzglobal, err := emotes.FFZGlobal()
+	ffzglobal, err := emotesClient.FFZGlobal()
 	if err != nil {
 		return nil, err
 	}
 	emote = append(emote, ffzglobal...)
-	ffzuser, err := emotes.FFZChannel(channelID)
+	ffzuser, err := emotesClient.FFZChannel(channelID)
 	if err != nil {
 		return nil, err
 	}
 	emote = append(emote, ffzuser...)
-	twitchglobal, err := emotes.TwitchGlobal()
+	twitchglobal, err := emotesClient.TwitchGlobal()
 	if err != nil {
 		return nil, err
 	}
 	emote = append(emote, twitchglobal...)
-	robot, err := emotes.Robot()
+	robot, err := emotesClient.Robot()
 	if err != nil {
 		return nil, err
 	}
 	emote = append(emote, robot...)
-	channel, err := emotes.Channel(channelID)
+	channel, err := emotesClient.Channel(channelID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,14 +75,16 @@ func Emotes(channelID string) ([]*protobuf.Emote, error) {
 }
 
 // Badges ...
-func Badges(channelID string) ([]*protobuf.Badge, error) {
+func Badges(client *http.Client, channelID string) ([]*protobuf.Badge, error) {
 	var badge = []*protobuf.Badge{}
 
-	global, err := badges.TwitchGlobal()
+	badgesClient := badges.NewClient(client)
+
+	global, err := badgesClient.TwitchGlobal()
 	if err != nil {
 		return nil, err
 	}
-	channel, err := badges.Channel(channelID)
+	channel, err := badgesClient.Channel(channelID)
 	if err != nil {
 		return nil, err
 	}
@@ -107,29 +113,29 @@ func Badges(channelID string) ([]*protobuf.Badge, error) {
 
 	// Provide warning logs if badges are duplicate across different sources
 	for i := range badge {
-		badgeCount := 0
+		badgeFound := 0
 		for d := range badge {
 			if (badge[i].Code == badge[d].Code) && (badge[i].Version == badge[d].Version) {
-				badgeCount++
-				if badgeCount > 1 {
-					log.Printf(`Warning: Duplicate badge "%s" version "%s" found across sources`+"\n", badge[i].Code, badge[i].Version)
-				}
+				badgeFound++
 			}
+		}
+		if badgeFound > 1 {
+			log.Printf(`Warning: Duplicate badge "%s" version "%s" found across sources`, badge[i].Code, badge[i].Version)
 		}
 	}
 	return badge, nil
 }
 
 // Messages ...
-func Messages(vodID, clientID string) ([]*protobuf.Message, error) {
+func Messages(client *http.Client, vodID, clientID string) ([]*protobuf.Message, error) {
 	var message = []*protobuf.Message{}
 
-	client := messages.NewClient(clientID)
+	messagesClient := messages.NewClient(client, clientID)
 
 	// Continue to move through the message chunks until next is not present
 	next := ""
 	for {
-		chunk, err := client.GetMessageChunk(next, vodID)
+		chunk, err := messagesClient.GetMessageChunk(next, vodID)
 		if err != nil {
 			return nil, err
 		}
@@ -160,8 +166,20 @@ func Messages(vodID, clientID string) ([]*protobuf.Message, error) {
 
 // Archive ...
 func Archive(vodID, clientID string) (*protobuf.Archive, error) {
-	client := messages.NewClient(clientID)
+	// Custom httpClient with timeouts because we are preforming many requests
+	// to different API's which we can't guarantee will be supported in the future.
+	var httpClient = &http.Client{
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 5 * time.Second,
+		},
+		Timeout: time.Second * 10,
+	}
+	client := messages.NewClient(httpClient, clientID)
 
+	log.Println("Getting basic VOD information")
 	vod, err := client.GetVODInfo(vodID)
 	if err != nil {
 		log.Println("Failed to get VOD information", err)
@@ -171,15 +189,18 @@ func Archive(vodID, clientID string) (*protobuf.Archive, error) {
 	if err != nil {
 		return &protobuf.Archive{}, err
 	}
-	badge, err := Badges(fmt.Sprintf("%d", vod.Channel.ID))
+	log.Println("Getting all global and channel specific badges")
+	badge, err := Badges(httpClient, fmt.Sprintf("%d", vod.Channel.ID))
 	if err != nil {
 		return &protobuf.Archive{}, err
 	}
-	emote, err := Emotes(fmt.Sprintf("%d", vod.Channel.ID))
+	log.Println("Getting all global, thirdparty and channel subscription emotes")
+	emote, err := Emotes(httpClient, fmt.Sprintf("%d", vod.Channel.ID))
 	if err != nil {
 		return &protobuf.Archive{}, err
 	}
-	message, err := Messages(vodID, clientID)
+	log.Println("Getting all messages sent during the VOD. This may take a while...")
+	message, err := Messages(httpClient, vodID, clientID)
 	if err != nil {
 		return &protobuf.Archive{}, err
 	}

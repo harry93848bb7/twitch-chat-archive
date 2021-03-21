@@ -10,12 +10,14 @@ import (
 
 // Client ...
 type Client struct {
+	client   *http.Client
 	clientID string
 }
 
 // NewClient ...
-func NewClient(clientID string) *Client {
+func NewClient(client *http.Client, clientID string) *Client {
 	return &Client{
+		client:   client,
 		clientID: clientID,
 	}
 }
@@ -28,7 +30,7 @@ func (c *Client) GetVODInfo(vodID string) (*vodInfo, error) {
 	}
 	request.Header.Add("Client-ID", c.clientID)
 	request.Header.Add("Accept", "application/vnd.twitchtv.v5+json")
-	resp, err := http.DefaultClient.Do(request)
+	resp, err := c.client.Do(request)
 	if err != nil {
 		return &vodInfo{}, err
 	}
@@ -54,7 +56,7 @@ func (c *Client) GetMessageChunk(next string, vodID string) (*messageChunk, erro
 		return &messageChunk{}, nil
 	}
 	r.Header.Add("Client-ID", c.clientID)
-	resp, err := http.DefaultClient.Do(r)
+	resp, err := c.client.Do(r)
 	if err != nil {
 		return &messageChunk{}, nil
 	}

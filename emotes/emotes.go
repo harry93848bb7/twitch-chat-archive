@@ -11,9 +11,21 @@ import (
 	"github.com/harry93848bb7/chat-archiver/sterilise"
 )
 
+// Client ...
+type Client struct {
+	client *http.Client
+}
+
+// NewClient ...
+func NewClient(client *http.Client) *Client {
+	return &Client{
+		client: client,
+	}
+}
+
 // BTTVGlobal ...
-func BTTVGlobal() ([]*protobuf.Emote, error) {
-	r, err := http.Get("http://api.betterttv.net/3/cached/emotes/global")
+func (c *Client) BTTVGlobal() ([]*protobuf.Emote, error) {
+	r, err := c.client.Get("http://api.betterttv.net/3/cached/emotes/global")
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +48,7 @@ func BTTVGlobal() ([]*protobuf.Emote, error) {
 	}
 	var emotes = []*protobuf.Emote{}
 	for _, emote := range data {
-		r, err := http.Get(fmt.Sprintf("http://cdn.betterttv.net/emote/%s/1x", emote.ID))
+		r, err := c.client.Get(fmt.Sprintf("http://cdn.betterttv.net/emote/%s/1x", emote.ID))
 		if err != nil {
 			return nil, err
 		}
@@ -66,8 +78,8 @@ func BTTVGlobal() ([]*protobuf.Emote, error) {
 }
 
 // BTTVChannel ...
-func BTTVChannel(channelID string) ([]*protobuf.Emote, error) {
-	r, err := http.Get(fmt.Sprintf("http://api.betterttv.net/3/cached/users/twitch/%s", channelID))
+func (c *Client) BTTVChannel(channelID string) ([]*protobuf.Emote, error) {
+	r, err := c.client.Get(fmt.Sprintf("http://api.betterttv.net/3/cached/users/twitch/%s", channelID))
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +121,7 @@ func BTTVChannel(channelID string) ([]*protobuf.Emote, error) {
 	}
 	var emotes = []*protobuf.Emote{}
 	for _, emote := range data.ChannelEmotes {
-		r, err := http.Get(fmt.Sprintf("http://cdn.betterttv.net/emote/%s/1x", emote.ID))
+		r, err := c.client.Get(fmt.Sprintf("http://cdn.betterttv.net/emote/%s/1x", emote.ID))
 		if err != nil {
 			return nil, err
 		}
@@ -136,7 +148,7 @@ func BTTVChannel(channelID string) ([]*protobuf.Emote, error) {
 		})
 	}
 	for _, emote := range data.SharedEmotes {
-		r, err := http.Get(fmt.Sprintf("http://cdn.betterttv.net/emote/%s/1x", emote.ID))
+		r, err := c.client.Get(fmt.Sprintf("http://cdn.betterttv.net/emote/%s/1x", emote.ID))
 		if err != nil {
 			return nil, err
 		}
@@ -166,8 +178,8 @@ func BTTVChannel(channelID string) ([]*protobuf.Emote, error) {
 }
 
 // FFZGlobal ...
-func FFZGlobal() ([]*protobuf.Emote, error) {
-	r, err := http.Get("http://api.frankerfacez.com/v1/set/global")
+func (c *Client) FFZGlobal() ([]*protobuf.Emote, error) {
+	r, err := c.client.Get("http://api.frankerfacez.com/v1/set/global")
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +207,7 @@ func FFZGlobal() ([]*protobuf.Emote, error) {
 	for _, set := range data.Sets {
 		if set.Title == "Global Emotes" {
 			for _, emote := range set.Emoticons {
-				r, err := http.Get(fmt.Sprintf("http://cdn.frankerfacez.com/emoticon/%d/1", emote.ID))
+				r, err := c.client.Get(fmt.Sprintf("http://cdn.frankerfacez.com/emoticon/%d/1", emote.ID))
 				if err != nil {
 					return nil, err
 				}
@@ -227,8 +239,8 @@ func FFZGlobal() ([]*protobuf.Emote, error) {
 }
 
 // FFZChannel ...
-func FFZChannel(channelID string) ([]*protobuf.Emote, error) {
-	r, err := http.Get(fmt.Sprintf("http://api.frankerfacez.com/v1/room/id/%s", channelID))
+func (c *Client) FFZChannel(channelID string) ([]*protobuf.Emote, error) {
+	r, err := c.client.Get(fmt.Sprintf("http://api.frankerfacez.com/v1/room/id/%s", channelID))
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +271,7 @@ func FFZChannel(channelID string) ([]*protobuf.Emote, error) {
 	var emotes = []*protobuf.Emote{}
 	for _, channel := range data.Sets {
 		for _, emote := range channel.Emoticons {
-			r, err := http.Get(fmt.Sprintf("http://cdn.frankerfacez.com/emoticon/%d/1", emote.ID))
+			r, err := c.client.Get(fmt.Sprintf("http://cdn.frankerfacez.com/emoticon/%d/1", emote.ID))
 			if err != nil {
 				return nil, err
 			}
@@ -290,7 +302,7 @@ func FFZChannel(channelID string) ([]*protobuf.Emote, error) {
 }
 
 // Robot ...
-func Robot() ([]*protobuf.Emote, error) {
+func (c *Client) Robot() ([]*protobuf.Emote, error) {
 	var emotes = []*protobuf.Emote{}
 	directory, err := robotEmotes.ReadDir("robot")
 	if err != nil {
@@ -322,11 +334,11 @@ func Robot() ([]*protobuf.Emote, error) {
 	return emotes, nil
 }
 
-func TwitchGlobal() ([]*protobuf.Emote, error) {
+func (c *Client) TwitchGlobal() ([]*protobuf.Emote, error) {
 	var emotes = []*protobuf.Emote{}
 
 	// All Twitch Global emotes excluding Robot
-	r, err := http.Get("http://api.twitchemotes.com/api/v4/channels/0")
+	r, err := c.client.Get("http://api.twitchemotes.com/api/v4/channels/0")
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +363,7 @@ func TwitchGlobal() ([]*protobuf.Emote, error) {
 		return nil, fmt.Errorf("Failed to retrieve Twitch Global emotes")
 	}
 	for i := 14; i < len(data.Emotes); i++ {
-		r, err := http.Get(fmt.Sprintf("http://static-cdn.jtvnw.net/emoticons/v1/%d/1.0", data.Emotes[i].ID))
+		r, err := c.client.Get(fmt.Sprintf("http://static-cdn.jtvnw.net/emoticons/v1/%d/1.0", data.Emotes[i].ID))
 		if err != nil {
 			return nil, err
 		}
@@ -378,7 +390,7 @@ func TwitchGlobal() ([]*protobuf.Emote, error) {
 		})
 	}
 	// All Twitch Turbo and Twitch Prime emotes
-	r, err = http.Get("http://api.twitchemotes.com/api/v4/channels/5")
+	r, err = c.client.Get("http://api.twitchemotes.com/api/v4/channels/5")
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +412,7 @@ func TwitchGlobal() ([]*protobuf.Emote, error) {
 		return nil, err
 	}
 	for _, e := range data.Emotes {
-		r, err := http.Get(fmt.Sprintf("http://static-cdn.jtvnw.net/emoticons/v1/%d/1.0", e.ID))
+		r, err := c.client.Get(fmt.Sprintf("http://static-cdn.jtvnw.net/emoticons/v1/%d/1.0", e.ID))
 		if err != nil {
 			return nil, err
 		}
@@ -430,8 +442,8 @@ func TwitchGlobal() ([]*protobuf.Emote, error) {
 }
 
 // Channel ...
-func Channel(channelID string) ([]*protobuf.Emote, error) {
-	r, err := http.Get("http://api.twitchemotes.com/api/v4/channels/" + channelID)
+func (c *Client) Channel(channelID string) ([]*protobuf.Emote, error) {
+	r, err := c.client.Get("http://api.twitchemotes.com/api/v4/channels/" + channelID)
 	if err != nil {
 		return nil, err
 	}
@@ -461,7 +473,7 @@ func Channel(channelID string) ([]*protobuf.Emote, error) {
 	var emotes = []*protobuf.Emote{}
 	for _, e := range d.Emotes {
 
-		r, err := http.Get(fmt.Sprintf("http://static-cdn.jtvnw.net/emoticons/v1/%d/1.0", e.ID))
+		r, err := c.client.Get(fmt.Sprintf("http://static-cdn.jtvnw.net/emoticons/v1/%d/1.0", e.ID))
 		if err != nil {
 			return nil, err
 		}

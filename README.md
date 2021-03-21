@@ -24,5 +24,4 @@ A tool to archive an entire VOD chat. The goal of this tool is to save all relav
 - Channel Subscription Emotes from channels outside of the VOD are not archived.
 
 ### TODO:
-- Improve logging when archiving message chunks (progress logging)
 - Investigate support for archival of subscription emotes from other channels

@@ -11,9 +11,21 @@ import (
 	"github.com/harry93848bb7/chat-archiver/sterilise"
 )
 
+// Client ...
+type Client struct {
+	client *http.Client
+}
+
+// NewClient ...
+func NewClient(client *http.Client) *Client {
+	return &Client{
+		client: client,
+	}
+}
+
 // TwitchGlobal ...
-func TwitchGlobal() ([]*protobuf.Badge, error) {
-	response, err := http.Get("http://badges.twitch.tv/v1/badges/global/display?language=en")
+func (c *Client) TwitchGlobal() ([]*protobuf.Badge, error) {
+	response, err := c.client.Get("http://badges.twitch.tv/v1/badges/global/display?language=en")
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +44,7 @@ func TwitchGlobal() ([]*protobuf.Badge, error) {
 	var badges = []*protobuf.Badge{}
 	for code, badge := range data.BadgeSets {
 		for number, version := range badge["versions"] {
-			r, err := http.Get(version.ImageURL1X)
+			r, err := c.client.Get(version.ImageURL1X)
 			if err != nil {
 				return nil, err
 			}
@@ -64,8 +76,8 @@ func TwitchGlobal() ([]*protobuf.Badge, error) {
 }
 
 // Channel ...
-func Channel(userID string) ([]*protobuf.Badge, error) {
-	response, err := http.Get(fmt.Sprintf("http://badges.twitch.tv/v1/badges/channels/%s/display?language=en", userID))
+func (c *Client) Channel(userID string) ([]*protobuf.Badge, error) {
+	response, err := c.client.Get(fmt.Sprintf("http://badges.twitch.tv/v1/badges/channels/%s/display?language=en", userID))
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +100,7 @@ func Channel(userID string) ([]*protobuf.Badge, error) {
 	var badges = []*protobuf.Badge{}
 	for code, badge := range data.BadgeSets {
 		for number, version := range badge["versions"] {
-			r, err := http.Get(version.ImageURL1X)
+			r, err := c.client.Get(version.ImageURL1X)
 			if err != nil {
 				return nil, err
 			}
