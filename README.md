@@ -25,7 +25,7 @@ You will need a Twitch Client ID. Register an application [here](https://dev.twi
 
 1. Download the [latest release](https://github.com/harry93848bb7/twitch-chat-archive/releases) for your system
 2. Extract the files in a folder of your choice
-2. Run the CLI: `./chat-archiver -client_id=4ab086186863bffbf81a73d359fc2ec7 -vod_id=951894217`
+2. Run the CLI: `./twitch-chat-archiver -client_id=4ab086186863bffbf81a73d359fc2ec7 -vod_id=951894217`
 
 ### CLI Arguments
 ```
